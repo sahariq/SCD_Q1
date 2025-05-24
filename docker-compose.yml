@@ -1,0 +1,109 @@
+version: '3.8'
+
+services:
+  auth-service:
+    build: ./auth-service
+    ports:
+      - "3002:3002"
+    environment:
+      - NODE_ENV=development
+      - PORT=3002
+      - MONGODB_URI=mongodb://mongodb:27017/auth
+      - JWT_SECRET=your_jwt_secret
+    depends_on:
+      - mongodb
+    networks:
+      - app-network
+    volumes:
+      - ./auth-service:/app
+      - /app/node_modules
+
+  blog-service:
+    build: ./blog-service
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=development
+      - PORT=3001
+      - MONGODB_URI=mongodb://mongodb:27017/blog
+      - JWT_SECRET=your_jwt_secret
+    depends_on:
+      - mongodb
+    networks:
+      - app-network
+    volumes:
+      - ./blog-service:/app
+      - /app/node_modules
+
+  comment-service:
+    build: ./comment-service
+    ports:
+      - "3003:3003"
+    environment:
+      - NODE_ENV=development
+      - PORT=3003
+      - MONGODB_URI=mongodb://mongodb:27017/comment
+      - JWT_SECRET=your_jwt_secret
+    depends_on:
+      - mongodb
+    networks:
+      - app-network
+    volumes:
+      - ./comment-service:/app
+      - /app/node_modules
+
+  profile-service:
+    build: ./profile-service
+    ports:
+      - "3004:3004"
+    environment:
+      - NODE_ENV=development
+      - PORT=3004
+      - MONGODB_URI=mongodb://mongodb:27017/profile
+      - JWT_SECRET=your_jwt_secret
+    depends_on:
+      - mongodb
+    networks:
+      - app-network
+    volumes:
+      - ./profile-service:/app
+      - /app/node_modules
+
+  api-gateway:
+    build: ./api-gateway
+    ports:
+      - "3020:3020"
+    environment:
+      - NODE_ENV=development
+      - PORT=3020
+      - AUTH_SERVICE_URL=http://auth-service:3002
+      - BLOG_SERVICE_URL=http://blog-service:3001
+      - COMMENT_SERVICE_URL=http://comment-service:3003
+      - PROFILE_SERVICE_URL=http://profile-service:3004
+      - JWT_SECRET=your_jwt_secret
+    depends_on:
+      - auth-service
+      - blog-service
+      - comment-service
+      - profile-service
+    networks:
+      - app-network
+    volumes:
+      - ./api-gateway:/app
+      - /app/node_modules
+
+  mongodb:
+    image: mongo:latest
+    ports:
+      - "27019:27017"
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  mongodb_data: 
