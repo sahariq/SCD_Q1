@@ -1,0 +1,129 @@
+name: Microservices CI/CD
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test-and-build:
+    runs-on: ubuntu-latest
+    
+    services:
+      mongodb:
+        image: mongo:latest
+        ports:
+          - 27017:27017
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        cache: 'npm'
+
+    # Auth Service
+    - name: Install Auth Service Dependencies
+      working-directory: ./auth-service
+      run: npm ci
+
+    - name: Run Auth Service Tests
+      working-directory: ./auth-service
+      run: npm test
+      env:
+        NODE_ENV: test
+        MONGODB_URI: mongodb://localhost:27017/auth_test
+        JWT_SECRET: test_secret
+
+    # Blog Service
+    - name: Install Blog Service Dependencies
+      working-directory: ./blog-service
+      run: npm ci
+
+    - name: Run Blog Service Tests
+      working-directory: ./blog-service
+      run: npm test
+      env:
+        NODE_ENV: test
+        MONGODB_URI: mongodb://localhost:27017/blog_test
+        JWT_SECRET: test_secret
+
+    # Comment Service
+    - name: Install Comment Service Dependencies
+      working-directory: ./comment-service
+      run: npm ci
+
+    - name: Run Comment Service Tests
+      working-directory: ./comment-service
+      run: npm test
+      env:
+        NODE_ENV: test
+        MONGODB_URI: mongodb://localhost:27017/comment_test
+        JWT_SECRET: test_secret
+
+    # Profile Service
+    - name: Install Profile Service Dependencies
+      working-directory: ./profile-service
+      run: npm ci
+
+    - name: Run Profile Service Tests
+      working-directory: ./profile-service
+      run: npm test
+      env:
+        NODE_ENV: test
+        MONGODB_URI: mongodb://localhost:27017/profile_test
+        JWT_SECRET: test_secret
+
+    # API Gateway
+    - name: Install API Gateway Dependencies
+      working-directory: ./api-gateway
+      run: npm ci
+
+    - name: Run API Gateway Tests
+      working-directory: ./api-gateway
+      run: npm test
+      env:
+        NODE_ENV: test
+        JWT_SECRET: test_secret
+
+    # Build Docker Images
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v2
+
+    - name: Build and Push Auth Service
+      uses: docker/build-push-action@v4
+      with:
+        context: ./auth-service
+        push: false
+        tags: auth-service:latest
+
+    - name: Build and Push Blog Service
+      uses: docker/build-push-action@v4
+      with:
+        context: ./blog-service
+        push: false
+        tags: blog-service:latest
+
+    - name: Build and Push Comment Service
+      uses: docker/build-push-action@v4
+      with:
+        context: ./comment-service
+        push: false
+        tags: comment-service:latest
+
+    - name: Build and Push Profile Service
+      uses: docker/build-push-action@v4
+      with:
+        context: ./profile-service
+        push: false
+        tags: profile-service:latest
+
+    - name: Build and Push API Gateway
+      uses: docker/build-push-action@v4
+      with:
+        context: ./api-gateway
+        push: false
+        tags: api-gateway:latest 
